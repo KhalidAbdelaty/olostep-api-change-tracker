@@ -13,7 +13,7 @@
     table { border-collapse: collapse; width: 100%; margin: 12px 0; }
     th, td { border: 1px solid #d1d9e0; padding: 6px 10px; text-align: left; }
     th { background: #f6f8fa; }
-    .method { background: #1f6feb; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+    .method { background: #1a7f37; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -21,10 +21,10 @@
   <p class="note">Fictional API used for a monitoring tutorial. Version 1.</p>
 
   <h2>Authentication</h2>
-  <p>Send your secret key in the <code>Authorization</code> header as a Bearer token on every request.</p>
+  <p>Every request must include your secret key in the <code>Authorization</code> header as a Bearer token.</p>
 
   <h2><span class="method">POST</span> <code>/payments</code></h2>
-  <p>Creates a payment for a customer.</p>
+  <p>Use this endpoint to create a new payment for one of your customers.</p>
 
   <h3>Request body</h3>
   <table>
@@ -35,7 +35,7 @@
       <tr><td><code>customer_id</code></td><td>string</td><td>Required</td><td>ID of the customer who pays.</td></tr>
       <tr><td><code>amount</code></td><td>integer</td><td>Required</td><td>Amount in the smallest currency unit, for example cents.</td></tr>
       <tr><td><code>currency</code></td><td>string</td><td>Required</td><td>Three-letter ISO currency code, for example <code>usd</code>.</td></tr>
-      <tr><td><code>description</code></td><td>string</td><td>Optional</td><td>Text shown on the receipt.</td></tr>
+      <tr><td><code>description</code></td><td>string</td><td>Optional</td><td>Text that appears on the customer's receipt.</td></tr>
     </tbody>
   </table>
 
