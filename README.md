@@ -13,10 +13,10 @@ The Issue says "potential breaking documentation change, pending review". A docs
 | `app/main.py` | FastAPI receiver. Stores the callback in SQLite and returns `202` |
 | `app/worker.py` | Background worker: verify, classify, open the Issue |
 | `app/verify.py` | Matches a callback to an event from `GET /v1/monitors/{id}/events` |
-| `app/classify.py` | Reads the required parameters from the snapshot and compares them |
+| `app/classify.py` | Reads the required parameters from the captured page and compares them |
 | `app/store.py` | SQLite tables for callbacks, verified runs, and contracts |
 | `app/github_client.py` | Creates the Issue and finds it again by a hidden marker |
-| `scripts/` | Create the monitor, attach the webhook, list events, check the live page, switch stages |
+| `scripts/` | Create the monitor, attach the webhook, list events, check the live page, switch stages, replay, reconcile, pause |
 | `tests/` | Replay, unmatched callbacks, and injected GitHub failures, all with test doubles |
 
 ## Requirements
@@ -117,5 +117,5 @@ The tests never call Olostep or GitHub. They use `httpx.MockTransport` doubles i
 ## Limits
 
 - Olostep lists signed webhook payloads as coming soon, so the receiver trusts nothing in the callback body. It checks the path token, refuses other monitor IDs, and only acts on a run it finds through the authenticated events API.
-- The snapshot URL Olostep returns is pre-signed and short-lived. The worker downloads it right away and never logs or stores it.
+- The `snapshot_url` in the events list is pre-signed. The log filter strips query strings, and the worker never stores the URL.
 - If the process dies after GitHub accepts the Issue and before SQLite records it, the row stays `issue_creating`. The next attempt searches the repository for the hidden marker before it posts again.
