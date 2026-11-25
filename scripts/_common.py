@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import MissingSetting, redact_value  # noqa: E402
+from app.olostep_client import OlostepError  # noqa: E402
 
 
 def show(data) -> None:
@@ -19,3 +20,6 @@ def run(main) -> None:
     except MissingSetting as exc:
         print(f"Stopped: {exc}")
         sys.exit(2)
+    except OlostepError as exc:
+        print(f"Stopped: {exc}")
+        sys.exit(1)
