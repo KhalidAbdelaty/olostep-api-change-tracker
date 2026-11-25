@@ -49,11 +49,12 @@ class FakeOlostep:
     """Serves one monitor, a fixed events list, and run details shaped like the live API."""
 
     def __init__(self, monitor_id: str, docs_url: str, events: list[dict],
-                 run_content: dict[str, str]):
+                 run_content: dict[str, str], baseline_content: str = "stale baseline"):
         self.monitor_id = monitor_id
         self.docs_url = docs_url
         self.events = events
         self.run_content = run_content
+        self.baseline_content = baseline_content
         self.calls: list[str] = []
 
     def handler(self, request: httpx.Request) -> httpx.Response:
@@ -77,7 +78,11 @@ class FakeOlostep:
             return httpx.Response(200, json={
                 "monitor_id": self.monitor_id, "run_id": run_id,
                 "snapshot": {"run_id": run_id},
-                "events": {"results": {"3": {"output": {"content": self.run_content[run_id]}}}},
+                # Node 1 is the fresh scrape, node 3 the stored baseline, as in the live API
+                "events": {"results": {
+                    "1": {"output": {"kind": "scalar", "markdown": self.run_content[run_id]}},
+                    "3": {"output": {"content": self.baseline_content}},
+                }},
             })
         return httpx.Response(404, json={"error": "Monitor not found"})
 

@@ -77,12 +77,13 @@ def verify_callback(body: dict, expected_monitor: str, docs_url: str,
 
 
 def run_content(run: dict) -> str | None:
-    """Find the captured page markdown inside the run detail's node results."""
+    """Return the page markdown this run scraped.
+
+    In the live run detail, one node's output holds the fresh scrape under
+    "markdown". Another node's "content" holds the stored baseline that the run
+    compared against, which is the previous page, not the current one.
+    """
     results = (run.get("events") or {}).get("results") or {}
-    for node in results.values():
-        output = (node or {}).get("output") or {}
-        if isinstance(output.get("content"), str):
-            return output["content"]
     for node in results.values():
         output = (node or {}).get("output") or {}
         if isinstance(output.get("markdown"), str):
