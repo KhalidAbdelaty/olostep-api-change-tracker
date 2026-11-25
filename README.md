@@ -75,11 +75,14 @@ Each stage needs its own completed monitor run. The shortest schedule is every 1
 
    Restart `uvicorn` after you export `OLOSTEP_MONITOR_ID` so the receiver knows which monitor to accept.
 
-4. Wait for the first run, then check the events and the receiver log:
+   In my run, the first snapshot was taken the moment the monitor became `active`, before the first cron slot. If the webhook was not attached in time, run the reconcile script below to pick that run up.
+
+4. Check the events and what the receiver recorded:
 
    ```bash
    python scripts/list_events.py
    python scripts/status.py
+   python scripts/reconcile.py
    ```
 
 5. Publish stage 2 (cosmetic), wait for a completed run, then publish stage 3 (`account_id`) and wait again. Check `python scripts/check_live_page.py` before each wait.
@@ -103,6 +106,13 @@ python -m pytest -q
 ```
 
 The tests never call Olostep or GitHub. They use `httpx.MockTransport` doubles in `tests/fakes.py` to inject a GitHub `503`, a read timeout after GitHub already stored the Issue, a crash between the create call and the local write, and a `410` for disabled Issues.
+
+## What the November 25, 2026 run showed
+
+- The webhook fired after every completed run, including the first snapshot and runs with no change, even with `notification.events` left empty.
+- The callback body carried `monitor_id`, `run_id`, `changed`, `is_first_snapshot`, `summary`, `content`, and `markdown_differences`. Olostep does not document this body, so the code reads only the two IDs from it.
+- The `snapshot_url` in the events list returned `403 AccessDenied` for every run. The worker reads the page from `GET /v1/monitors/{id}/runs/{run_id}` instead, using the node output that holds the fresh scrape (`markdown`), not the stored baseline (`content`).
+- The cosmetic edit came back `changed: false`. The `customer_id` to `account_id` edit came back `changed: true` and opened one Issue.
 
 ## Limits
 
