@@ -1,0 +1,13 @@
+{
+  "changed": false,
+  "content": "Demo Payments API Reference\n\n# Demo Payments API\n\nFictional API used for a monitoring tutorial. Version 1.\n\n## Authentication\n\nSend your secret key in the `Authorization` header as a Bearer token on every request.\n\n## POST `/payments`\n\nCreates a payment for a customer.\n\n### Request body\n\nParameter\n\nType\n\nRequired\n\nDescription\n\n`customer_id`\n\nstring\n\nRequired\n\nID of the customer who pays.\n\n`amount`\n\ninteger\n\nRequired\n\nAmount in the smallest currency unit, for example cents.\n\n`currency`\n\nstring\n\nRequired\n\nThree-letter ISO currency code, for example `usd`.\n\n`description`\n\nstring\n\nOptional\n\nText shown on the receipt.\n\n### Example request\n\ncurl -X POST https://api.demo-payments.example/payments \\\\\n  -H \"Authorization: Bearer $DEMO\\_PAYMENTS\\_KEY\" \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"customer\\_id\": \"cus\\_123\", \"amount\": 2500, \"currency\": \"usd\"}'\n\n### Response\n\nReturns `201 Created` with the new payment object.",
+  "created_at": 1795624763,
+  "created_at_ts": "2026-11-25T16:39:23.327114+00:00",
+  "is_first_snapshot": true,
+  "kind": "scalar",
+  "markdown_differences": "",
+  "monitor_id": "monitor_1m4593ax4b",
+  "run_id": "run_c1pr5t4ip7",
+  "structured_data": null,
+  "summary": "First snapshot of this monitor has been taken. Stored current content as baseline."
+}

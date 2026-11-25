@@ -46,30 +46,39 @@ class FakeGitHub:
 
 
 class FakeOlostep:
-    """Serves one monitor and a fixed list of events. Snapshots are served by URL."""
+    """Serves one monitor, a fixed events list, and run details shaped like the live API."""
 
-    def __init__(self, monitor_id: str, docs_url: str, events: list[dict], snapshots: dict):
+    def __init__(self, monitor_id: str, docs_url: str, events: list[dict],
+                 run_content: dict[str, str]):
         self.monitor_id = monitor_id
         self.docs_url = docs_url
         self.events = events
-        self.snapshots = snapshots
+        self.run_content = run_content
         self.calls: list[str] = []
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.calls.append(f"{request.method} {request.url.path}")
         path = request.url.path
-        if path == f"/v1/monitors/{self.monitor_id}":
+        base = f"/v1/monitors/{self.monitor_id}"
+        if path == base:
             return httpx.Response(200, json={
                 "id": self.monitor_id, "status": "active",
                 "tracked": {"type": "urls", "urls": [self.docs_url]},
             })
-        if path == f"/v1/monitors/{self.monitor_id}/events":
+        if path == f"{base}/events":
             return httpx.Response(200, json={
                 "data": self.events, "has_more": False, "next_cursor": None,
                 "total_count": len(self.events),
             })
-        if request.url.host == "snapshots.test":
-            return httpx.Response(200, json=self.snapshots[path])
+        if path.startswith(f"{base}/runs/"):
+            run_id = path.rsplit("/", 1)[1]
+            if run_id not in self.run_content:
+                return httpx.Response(404, json={"error": "Run not found"})
+            return httpx.Response(200, json={
+                "monitor_id": self.monitor_id, "run_id": run_id,
+                "snapshot": {"run_id": run_id},
+                "events": {"results": {"3": {"output": {"content": self.run_content[run_id]}}}},
+            })
         return httpx.Response(404, json={"error": "Monitor not found"})
 
     def transport(self) -> httpx.MockTransport:
