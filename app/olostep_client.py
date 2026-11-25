@@ -20,8 +20,6 @@ class OlostepClient:
             timeout=30,
             transport=transport,
         )
-        # Pre-signed snapshot URLs must not receive the Olostep key
-        self._plain = httpx.Client(timeout=30, transport=transport)
 
     def _call(self, method: str, path: str, **kwargs) -> tuple[int, dict]:
         response = self._http.request(method, path, **kwargs)
@@ -53,9 +51,3 @@ class OlostepClient:
 
     def get_run(self, monitor_id: str, run_id: str) -> dict:
         return self._call("GET", f"/monitors/{monitor_id}/runs/{run_id}")[1]
-
-    def download_snapshot(self, snapshot_url: str) -> dict:
-        """Fetch the pre-signed snapshot JSON. The URL expires, so call this right away."""
-        response = self._plain.get(snapshot_url)
-        response.raise_for_status()
-        return response.json()

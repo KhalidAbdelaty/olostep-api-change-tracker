@@ -19,10 +19,15 @@ class Verification:
 def callback_ids(body: dict) -> tuple[str | None, str | None] | None:
     """Return (monitor_id, run_id) named by the callback.
 
-    Olostep does not document the Monitor callback body, so this returns None
-    until a real callback has been captured and modeled.
+    Olostep does not document the Monitor callback body. The first real callbacks,
+    captured on November 25, 2026, carried monitor_id, run_id, changed,
+    is_first_snapshot, summary, and the page content as top-level keys. Only the
+    two IDs are read here. Everything else is fetched again from the API.
     """
-    return None
+    monitor_id, run_id = body.get("monitor_id"), body.get("run_id")
+    if not isinstance(monitor_id, str) or not isinstance(run_id, str):
+        return None
+    return monitor_id, run_id
 
 
 def find_event(olostep: OlostepClient, monitor_id: str, run_id: str) -> dict | None:
@@ -42,7 +47,7 @@ def verify_callback(body: dict, expected_monitor: str, docs_url: str,
                     olostep: OlostepClient) -> Verification:
     ids = callback_ids(body)
     if ids is None:
-        return Verification("rejected", "callback shape not modeled yet")
+        return Verification("rejected", "callback has no monitor_id and run_id strings")
     monitor_id, run_id = ids
 
     if not expected_monitor:
@@ -61,5 +66,25 @@ def verify_callback(body: dict, expected_monitor: str, docs_url: str,
     if event is None:
         return Verification("unmatched", "no event with this run id yet",
                             expected_monitor, run_id)
+
+    # The run detail holds the page content Olostep captured for this run
+    run = olostep.get_run(expected_monitor, run_id)
+    if run.get("snapshot", {}).get("run_id") != run_id:
+        return Verification("unmatched", "run detail is not ready yet", expected_monitor, run_id)
+    event = {**event, "content": run_content(run)}
     return Verification("verified", "run found in the authenticated events list",
                         expected_monitor, run_id, event)
+
+
+def run_content(run: dict) -> str | None:
+    """Find the captured page markdown inside the run detail's node results."""
+    results = (run.get("events") or {}).get("results") or {}
+    for node in results.values():
+        output = (node or {}).get("output") or {}
+        if isinstance(output.get("content"), str):
+            return output["content"]
+    for node in results.values():
+        output = (node or {}).get("output") or {}
+        if isinstance(output.get("markdown"), str):
+            return output["markdown"]
+    return None

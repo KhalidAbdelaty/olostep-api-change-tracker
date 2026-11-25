@@ -5,11 +5,12 @@ from dataclasses import dataclass, field
 
 ENDPOINT = "POST /payments"
 
-# One documented row looks like: customer_id | string | Required | ...
+# One documented row: the name, its type, then Required or Optional.
+# Cells may be split by pipes, HTML table cells, or line breaks (Olostep's markdown).
+SEP = r"(?:\s*\|\s*|\s*</t[dh]>\s*<t[dh][^>]*>\s*|\s*\n\s*)"
 ROW = re.compile(
-    r"`?\b([a-z][a-z0-9_]*)\b`?(?:</code>)?\s*(?:\||</t[dh]>\s*<t[dh][^>]*>)\s*"
-    r"(?:string|integer|number|boolean|object|array)\s*"
-    r"(?:\||</t[dh]>\s*<t[dh][^>]*>)\s*(Required|Optional)",
+    r"`?\b([a-z][a-z0-9_]*)\b`?(?:</code>)?" + SEP
+    + r"(?:string|integer|number|boolean|object|array)" + SEP + r"(Required|Optional)\b",
     re.IGNORECASE,
 )
 
@@ -21,18 +22,9 @@ class Contract:
     optional: list[str] = field(default_factory=list)
 
 
-def snapshot_text(snapshot) -> str:
-    """Join every string in the snapshot JSON so the row pattern can scan it."""
-    if isinstance(snapshot, dict):
-        return "\n".join(snapshot_text(v) for v in snapshot.values())
-    if isinstance(snapshot, list):
-        return "\n".join(snapshot_text(v) for v in snapshot)
-    return snapshot if isinstance(snapshot, str) else ""
-
-
-def extract_contract(snapshot) -> Contract | None:
-    text = snapshot_text(snapshot)
-    if "/payments" not in text:
+def extract_contract(text: str | None) -> Contract | None:
+    """Read the required and optional request parameters of POST /payments."""
+    if not text or "/payments" not in text:
         return None
     required, optional = [], []
     for name, flag in ROW.findall(text):
@@ -55,7 +47,8 @@ class Decision:
 
 def decide(previous: list[str] | None, current: Contract | None) -> Decision:
     if current is None:
-        return Decision("unclassified", False, reason="no POST /payments contract found in the snapshot")
+        return Decision("unclassified", False,
+                        reason="no POST /payments contract found in the captured page")
     if previous is None:
         return Decision("baseline", False, reason="first verified contract for this monitor")
     removed = sorted(set(previous) - set(current.required))

@@ -148,9 +148,7 @@ class Worker:
     # Step 2: classify the verified run against the previous contract
 
     def classify(self, monitor_id: str, run_id: str, event: dict) -> Decision:
-        snapshot_url = event.get("snapshot_url")
-        snapshot = self.olostep.download_snapshot(snapshot_url) if snapshot_url else None
-        contract = extract_contract(snapshot) if snapshot is not None else None
+        contract = extract_contract(event.get("content"))
         previous = self.store.previous_contract(monitor_id, event.get("created"))
         previous_required = json.loads(previous["required_params"]) if previous else None
         decision = decide(previous_required, contract)

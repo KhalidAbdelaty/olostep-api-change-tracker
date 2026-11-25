@@ -21,10 +21,14 @@ class RedactSecrets(logging.Filter):
     """Mask the API keys, the callback path token, and signed URLs in every log line."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        message = record.getMessage()
-        clean = redact_value(message)
-        if clean != message:
-            record.msg, record.args = clean, ()
+        record.msg = redact_value(record.msg) if isinstance(record.msg, str) else record.msg
+        if isinstance(record.args, tuple):
+            record.args = tuple(redact_value(a) if isinstance(a, str) else a for a in record.args)
+        if record.exc_info:
+            # Tracebacks can quote URLs, so render and redact them here
+            text = logging.Formatter().formatException(record.exc_info)
+            record.msg = f"{record.getMessage()}\n{redact_value(text)}"
+            record.args, record.exc_info, record.exc_text = (), None, None
         return True
 
 
